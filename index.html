@@ -1,0 +1,4118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b0713">
+<title>WatchTogether</title>
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://www.youtube.com">
+<link rel="preconnect" href="https://www.youtube-nocookie.com">
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+:root{
+    --bg:#0b0713;
+    --surface:#161022;
+    --surface-2:#1e1730;
+    --border:#2b2440;
+    --text:#f5f3fa;
+    --text-dim:#a99cc0;
+    --v1:#8b5cf6;
+    --v2:#ec4899;
+    --grad:linear-gradient(135deg,var(--v1),var(--v2));
+    --host:#f7b733;
+    --green:#3ecf8e;
+    --radius-lg:22px;
+    --radius-md:14px;
+}
+
+body{
+    background:
+        radial-gradient(600px 300px at 15% -10%,rgba(139,92,246,.22),transparent 60%),
+        radial-gradient(600px 300px at 90% 0%,rgba(236,72,153,.16),transparent 60%),
+        var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    min-height:100vh;
+}
+
+button,input,select{
+    font:inherit;
+    color:inherit;
+}
+
+button{
+    cursor:pointer;
+    border:0;
+    background:none;
+}
+
+.icon{
+    width:18px;
+    height:18px;
+    flex-shrink:0;
+}
+
+.wrap{
+    width:100%;
+    max-width:1200px;
+    margin:auto;
+    padding:16px;
+}
+
+/* TOPBAR */
+
+.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:8px 4px;
+    margin-bottom:16px;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:17px;
+    font-weight:800;
+    letter-spacing:-.2px;
+}
+
+.brand-icon{
+    width:32px;
+    height:32px;
+    border-radius:10px;
+    background:var(--grad);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    box-shadow:0 4px 14px rgba(139,92,246,.4);
+}
+
+.brand-icon .icon{
+    width:18px;
+    height:18px;
+}
+
+.topbar-right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.pill{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:7px 13px;
+    font-size:13px;
+    color:var(--text-dim);
+}
+
+.status-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#4b4560;
+    flex-shrink:0;
+}
+
+.status-dot.on{
+    background:var(--green);
+    box-shadow:0 0 0 3px rgba(62,207,142,.18);
+}
+
+.status-dot.pending{
+    background:var(--host);
+}
+
+.icon-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+}
+
+.icon-btn:active{
+    transform:scale(.94);
+}
+
+.icon-btn.grad{
+    background:var(--grad);
+    border-color:transparent;
+    color:#fff;
+}
+
+/* CARDS */
+
+.card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:24px;
+}
+
+h1{
+    font-size:25px;
+    font-weight:800;
+    margin-bottom:8px;
+    letter-spacing:-.3px;
+}
+
+.subtitle{
+    color:var(--text-dim);
+    margin-bottom:24px;
+    max-width:48ch;
+    font-size:14.5px;
+    line-height:1.5;
+}
+
+label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--text-dim);
+    margin-bottom:8px;
+}
+
+.field{
+    margin-bottom:16px;
+}
+
+input[type=text],
+input[type=url],
+select{
+    width:100%;
+    height:48px;
+    padding:0 15px;
+    border-radius:var(--radius-md);
+    border:1px solid var(--border);
+    background:var(--bg);
+    color:var(--text);
+    outline:none;
+    transition:border-color .15s,box-shadow .15s;
+}
+
+select{
+    appearance:none;
+}
+
+input:focus,
+select:focus{
+    border-color:var(--v1);
+    box-shadow:0 0 0 3px rgba(139,92,246,.18);
+}
+
+input::placeholder{
+    color:#5f5878;
+}
+
+.btn{
+    min-height:48px;
+    padding:0 20px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:14.5px;
+    transition:transform .1s,opacity .1s;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+
+.btn:active{
+    transform:scale(.97);
+}
+
+.btn-primary{
+    background:var(--grad);
+    color:#fff;
+    box-shadow:0 8px 22px rgba(139,92,246,.35);
+}
+
+.btn-primary:disabled{
+    opacity:.5;
+}
+
+.btn-ghost{
+    background:var(--surface-2);
+    color:var(--text);
+    border:1px solid var(--border);
+}
+
+.btn.full{
+    width:100%;
+}
+
+.hidden{
+    display:none!important;
+}
+
+/* HOME */
+
+#home{
+    max-width:470px;
+    margin:36px auto 0;
+}
+
+.home-icon{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:var(--grad);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    margin-bottom:18px;
+    box-shadow:0 10px 26px rgba(139,92,246,.4);
+}
+
+.home-icon .icon{
+    width:26px;
+    height:26px;
+}
+
+/* TYPE SELECTOR */
+
+.type-selector{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:5px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:16px;
+    margin-bottom:18px;
+}
+
+.type-option{
+    height:44px;
+    border-radius:11px;
+    color:var(--text-dim);
+    font-weight:700;
+    font-size:13.5px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition:.15s;
+}
+
+.type-option.active{
+    color:#fff;
+    background:var(--surface-2);
+    box-shadow:0 3px 12px rgba(0,0,0,.25);
+}
+
+.type-option .icon{
+    width:17px;
+    height:17px;
+}
+
+/* WATCH PANEL */
+
+.watch-panel{
+    display:flex;
+    flex-direction:column;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    margin-bottom:16px;
+}
+
+.video-col{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    flex:1;
+}
+
+.video-frame{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:#000;
+    overflow:hidden;
+}
+
+#player,
+#siteFrame{
+    width:100%;
+    height:100%;
+}
+
+#siteFrame{
+    display:none;
+    border:0;
+    background:#fff;
+}
+
+.video-empty{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-dim);
+    background:linear-gradient(160deg,#0d0916,#050308);
+    font-size:13.5px;
+    text-align:center;
+    padding:20px;
+}
+
+.video-empty .home-icon{
+    margin-bottom:2px;
+}
+
+.site-blocked{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px;
+    background:linear-gradient(160deg,#0d0916,#050308);
+}
+
+.site-blocked.show{
+    display:flex;
+}
+
+.site-blocked-icon{
+    width:58px;
+    height:58px;
+    border-radius:18px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:16px;
+}
+
+.site-blocked h3{
+    font-size:16px;
+    margin-bottom:8px;
+}
+
+.site-blocked p{
+    color:var(--text-dim);
+    max-width:420px;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.video-toolbar{
+    padding:16px;
+    border-top:1px solid var(--border);
+}
+
+.toolbar-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.toolbar-left{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+}
+
+.now-playing{
+    font-size:13.5px;
+    color:var(--text-dim);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:500px;
+}
+
+.host-controls{
+    display:flex;
+    gap:8px;
+}
+
+.edit-video-row{
+    display:none;
+    gap:8px;
+    margin-top:14px;
+}
+
+.edit-video-row.open{
+    display:flex;
+}
+
+.edit-video-row input{
+    flex:1;
+}
+
+.sync-note{
+    margin-top:12px;
+    font-size:12px;
+    color:var(--text-dim);
+}
+
+/* MODE BADGE */
+
+.mode-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 9px;
+    border-radius:999px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-size:11px;
+    font-weight:700;
+}
+
+/* CHAT */
+
+.chat-col{
+    display:flex;
+    flex-direction:column;
+    border-top:1px solid var(--border);
+    height:420px;
+}
+
+.chat-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:13px 16px;
+    border-bottom:1px solid var(--border);
+}
+
+.chat-title{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-weight:700;
+    font-size:14.5px;
+}
+
+.chat-title .icon{
+    color:var(--v2);
+}
+
+.messages{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--bg);
+}
+
+.message{
+    max-width:88%;
+}
+
+.message .name{
+    font-size:11.5px;
+    font-weight:800;
+    margin-bottom:3px;
+}
+
+.message.me{
+    align-self:flex-end;
+}
+
+.message.me .name{
+    text-align:right;
+}
+
+.bubble{
+    background:var(--surface-2);
+    border-radius:14px;
+    padding:9px 12px;
+    font-size:14px;
+    line-height:1.4;
+    word-break:break-word;
+}
+
+.message.me .bubble{
+    background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(236,72,153,.28));
+}
+
+.link-card{
+    background:var(--surface-2);
+    border-radius:14px;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.link-card .link-info{
+    flex:1;
+    min-width:0;
+}
+
+.link-card .link-label{
+    font-size:12.5px;
+    color:var(--text-dim);
+}
+
+.link-card .link-url{
+    font-size:12.5px;
+    color:var(--text);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.link-card button{
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--grad);
+    color:#fff;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12.5px;
+    font-weight:700;
+}
+
+.link-card button .icon{
+    width:14px;
+    height:14px;
+}
+
+.link-card button:disabled{
+    opacity:.55;
+}
+
+.system-message{
+    align-self:center;
+    color:var(--text-dim);
+    font-size:12px;
+    text-align:center;
+}
+
+.chat-input-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 14px;
+    border-top:1px solid var(--border);
+}
+
+.chat-input-row input{
+    flex:1;
+    height:44px;
+    border-radius:999px;
+}
+
+/* AVATARS */
+
+.avatar-stack{
+    display:flex;
+    align-items:center;
+}
+
+.avatar{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:var(--surface-2);
+    border:2px solid var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:800;
+    color:#fff;
+    margin-left:-9px;
+    flex-shrink:0;
+}
+
+.avatar-stack .avatar:first-child{
+    margin-left:0;
+}
+
+.avatar.host{
+    box-shadow:0 0 0 2px var(--host);
+}
+
+/* RESPONSIVE */
+
+@media(min-width:900px){
+
+    .watch-panel{
+        flex-direction:row;
+        height:680px;
+    }
+
+    .video-frame{
+        aspect-ratio:auto;
+        flex:1;
+    }
+
+    .chat-col{
+        width:370px;
+        height:auto;
+        border-top:0;
+        border-left:1px solid var(--border);
+    }
+}
+
+@media(max-width:650px){
+
+    .wrap{
+        padding:10px;
+    }
+
+    .card{
+        padding:18px;
+    }
+
+    #home{
+        margin-top:18px;
+    }
+
+    .chat-col{
+        height:360px;
+    }
+
+    .toolbar-left{
+        max-width:100%;
+    }
+
+    .now-playing{
+        max-width:250px;
+    }
+}
+
+@media(prefers-reduced-motion:reduce){
+    *{
+        transition:none!important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+        </div>
+
+        WatchTogether
+
+    </div>
+
+    <div class="topbar-right">
+
+        <div class="pill">
+            <span id="statusDot" class="status-dot"></span>
+            <span id="statusText">Hors ligne</span>
+        </div>
+
+        <div id="roomChip"
+             class="pill hidden"
+             style="cursor:pointer"
+             onclick="copyRoomLink()">
+
+            <span id="roomCode">------</span>
+
+        </div>
+
+        <button id="shareBtn"
+                class="icon-btn hidden"
+                onclick="copyRoomLink()"
+                title="Copier le lien de la salle">
+
+            <svg class="icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+
+            </svg>
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     ACCUEIL
+===================================================== -->
+
+<section id="home">
+
+    <div class="card">
+
+        <div class="home-icon">
+
+            <svg class="icon"
+                 viewBox="0 0 24 24"
+                 fill="currentColor">
+
+                <polygon points="5 3 19 12 5 21 5 3"/>
+
+            </svg>
+
+        </div>
+
+        <h1>Regardez ensemble</h1>
+
+        <p class="subtitle">
+            Crée une salle privée, choisis YouTube ou un site web compatible,
+            puis partage la salle avec tes amis.
+        </p>
+
+
+        <!-- TYPE -->
+
+        <label>Type de contenu</label>
+
+        <div class="type-selector">
+
+            <button id="youtubeType"
+                    class="type-option active"
+                    onclick="selectContentType('youtube')">
+
+                <svg class="icon"
+                     viewBox="0 0 24 24"
+                     fill="currentColor">
+
+                    <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8Z"/>
+
+                    <polygon points="9.6 15.5 15.8 12 9.6 8.5"
+                             fill="#0b0713"/>
+
+                </svg>
+
+                YouTube
+
+            </button>
+
+
+            <button id="websiteType"
+                    class="type-option"
+                    onclick="selectContentType('website')">
+
+                <svg class="icon"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2">
+
+                    <circle cx="12" cy="12" r="9"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <path d="M12 3a14 14 0 0 1 0 18"/>
+                    <path d="M12 3a14 14 0 0 0 0 18"/>
+
+                </svg>
+
+                Site web
+
+            </button>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>Pseudo</label>
+
+            <input id="hostName"
+                   type="text"
+                   maxlength="20"
+                   placeholder="Ton pseudo"
+                   autocomplete="off">
+
+        </div>
+
+
+        <div class="field">
+
+            <label id="contentLabel">Lien YouTube</label>
+
+            <input id="initialVideo"
+                   type="url"
+                   placeholder="https://www.youtube.com/watch?v=..."
+                   autocomplete="off">
+
+        </div>
+
+
+        <button class="btn btn-primary full"
+                onclick="createRoom()">
+
+            <svg class="icon"
+                 viewBox="0 0 24 24"
+                 fill="currentColor">
+
+                <polygon points="5 3 19 12 5 21 5 3"/>
+
+            </svg>
+
+            Créer la salle
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     SALLE
+===================================================== -->
+
+<section id="room" class="hidden">
+
+
+    <div class="pill" style="margin-bottom:12px;">
+
+        <div id="peopleAvatars"
+             class="avatar-stack"></div>
+
+        <span id="peopleCount"
+              style="margin-left:6px;">
+            1 personne
+        </span>
+
+    </div>
+
+
+    <div class="watch-panel">
+
+
+        <div class="video-col">
+
+
+            <div class="video-frame">
+
+                <!-- YOUTUBE -->
+
+                <div id="player"></div>
+
+
+                <!-- SITE WEB -->
+
+                <iframe id="siteFrame"
+                        title="Site partagé"
+                        src="about:blank"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowfullscreen>
+                </iframe>
+
+
+                <!-- VIDE VIDE -->
+
+                <div id="videoEmpty"
+                     class="video-empty">
+
+                    <div class="home-icon">
+
+                        <svg class="icon"
+                             viewBox="0 0 24 24"
+                             fill="currentColor">
+
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+
+                        </svg>
+
+                    </div>
+
+                    <span>Aucun contenu chargé</span>
+
+                </div>
+
+
+                <!-- SITE BLOQUÉ -->
+
+                <div id="siteBlocked"
+                     class="site-blocked">
+
+                    <div class="site-blocked-icon">
+
+                        <svg class="icon"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
+
+                            <circle cx="12" cy="12" r="9"/>
+                            <line x1="3" y1="3" x2="21" y2="21"/>
+
+                        </svg>
+
+                    </div>
+
+                    <h3>Ce site ne peut pas être intégré</h3>
+
+                    <p>
+                        Ce site interdit l'affichage dans une fenêtre intégrée.
+                        Essaie avec un autre site compatible avec les iframes.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="video-toolbar">
+
+
+                <div class="toolbar-row">
+
+
+                    <div class="toolbar-left">
+
+                        <button id="editVideoBtn"
+                                class="icon-btn hidden"
+                                onclick="toggleEditContent()"
+                                title="Changer le contenu">
+
+                            <svg class="icon"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+
+                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+
+                            </svg>
+
+                        </button>
+
+
+                        <span id="modeBadge"
+                              class="mode-badge hidden">
+                            YouTube
+                        </span>
+
+
+                        <span id="nowPlaying"
+                              class="now-playing">
+                            En attente d'un contenu
+                        </span>
+
+                    </div>
+
+
+                    <div id="hostControls"
+                         class="host-controls hidden">
+
+                        <button class="icon-btn"
+                                onclick="pauseEveryone()"
+                                title="Mettre en pause pour tout le monde">
+
+                            <svg class="icon"
+                                 viewBox="0 0 24 24"
+                                 fill="currentColor">
+
+                                <rect x="6" y="4" width="4" height="16"/>
+                                <rect x="14" y="4" width="4" height="16"/>
+
+                            </svg>
+
+                        </button>
+
+
+                        <button class="icon-btn grad"
+                                onclick="playEveryone()"
+                                title="Reprendre pour tout le monde">
+
+                            <svg class="icon"
+                                 viewBox="0 0 24 24"
+                                 fill="currentColor">
+
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div id="editVideoRow"
+                     class="edit-video-row">
+
+                    <input id="newVideo"
+                           type="url"
+                           placeholder="Nouvelle URL..."
+                           autocomplete="off">
+
+                    <button class="btn btn-primary"
+                            onclick="changeContent()">
+
+                        Charger
+
+                    </button>
+
+                </div>
+
+
+                <div id="syncNote"
+                     class="sync-note hidden">
+
+                    YouTube : lecture, pause et position synchronisées.
+                    Les sites web sont synchronisés au niveau de la page.
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHAT -->
+
+        <div class="chat-col">
+
+
+            <div class="chat-header">
+
+                <div class="chat-title">
+
+                    <svg class="icon"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+
+                    </svg>
+
+                    Discussion
+
+                </div>
+
+            </div>
+
+
+            <div id="chat"
+                 class="messages"></div>
+
+
+            <div class="chat-input-row">
+
+                <input id="chatInput"
+                       type="text"
+                       maxlength="300"
+                       placeholder="Écris un message..."
+                       autocomplete="off">
+
+
+                <button class="icon-btn grad"
+                        onclick="sendChat()"
+                        title="Envoyer">
+
+                    <svg class="icon"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+</div>
+
+
+<div id="toast"
+     style="
+     position:fixed;
+     left:50%;
+     bottom:22px;
+     transform:translateX(-50%) translateY(16px);
+     background:var(--surface-2);
+     border:1px solid var(--border);
+     color:var(--text);
+     padding:11px 16px;
+     border-radius:999px;
+     opacity:0;
+     pointer-events:none;
+     transition:opacity .2s,transform .2s;
+     z-index:9999;
+     max-width:90%;
+     text-align:center;
+     font-size:13.5px;">
+</div>
+
+
+<script>
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+const PEER_PREFIX="wta-";
+
+const AVATAR_COLORS=[
+    "#8b5cf6",
+    "#ec4899",
+    "#f97316",
+    "#22c55e",
+    "#06b6d4",
+    "#eab308",
+    "#f43f5e"
+];
+
+let peer=null;
+
+let isHost=false;
+
+let roomId=null;
+
+let myId=null;
+
+let myName="";
+
+let hostConnection=null;
+
+let connections=new Map();
+
+let users={};
+
+let contentType="youtube";
+
+let currentVideoId=null;
+
+let currentSiteUrl=null;
+
+let player=null;
+
+let playerReady=false;
+
+let applyingRemoteState=false;
+
+let syncTimer=null;
+
+let lastHostTime=0;
+
+let lastHostState=2;
+
+
+/* DOM */
+
+const home=document.getElementById("home");
+
+const room=document.getElementById("room");
+
+const toastEl=document.getElementById("toast");
+
+const videoEmpty=document.getElementById("videoEmpty");
+
+const siteFrame=document.getElementById("siteFrame");
+
+const siteBlocked=document.getElementById("siteBlocked");
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+let toastTimeout;
+
+function toast(msg){
+
+    clearTimeout(toastTimeout);
+
+    toastEl.textContent=msg;
+
+    toastEl.style.opacity="1";
+
+    toastEl.style.transform=
+        "translateX(-50%) translateY(0)";
+
+    toastTimeout=setTimeout(function(){
+
+        toastEl.style.opacity="0";
+
+        toastEl.style.transform=
+            "translateX(-50%) translateY(16px)";
+
+    },2500);
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function setStatus(text,dotClass){
+
+    document.getElementById("statusText").textContent=text;
+
+    document.getElementById("statusDot").className=
+        "status-dot"+
+        (dotClass?" "+dotClass:"");
+}
+
+
+/* =====================================================
+   TYPE
+===================================================== */
+
+function selectContentType(type){
+
+    contentType=type;
+
+    const youtubeBtn=
+        document.getElementById("youtubeType");
+
+    const websiteBtn=
+        document.getElementById("websiteType");
+
+    const label=
+        document.getElementById("contentLabel");
+
+    const input=
+        document.getElementById("initialVideo");
+
+
+    youtubeBtn.classList.toggle(
+        "active",
+        type==="youtube"
+    );
+
+    websiteBtn.classList.toggle(
+        "active",
+        type==="website"
+    );
+
+
+    if(type==="youtube"){
+
+        label.textContent="Lien YouTube";
+
+        input.placeholder=
+            "https://www.youtube.com/watch?v=...";
+
+    }else{
+
+        label.textContent="URL du site";
+
+        input.placeholder=
+            "https://www.exemple.com/...";
+
+    }
+}
+
+
+/* =====================================================
+   UTILITAIRES
+===================================================== */
+
+function generateRoomId(){
+
+    const chars=
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    let r="";
+
+    for(let i=0;i<6;i++){
+
+        r+=chars[
+            Math.floor(
+                Math.random()*chars.length
+            )
+        ];
+
+    }
+
+    return r;
+}
+
+
+function getYouTubeId(value){
+
+    if(!value) return null;
+
+    value=value.trim();
+
+    try{
+
+        const url=new URL(value);
+
+        const host=
+            url.hostname
+                .replace("www.","")
+                .replace("m.","");
+
+        if(host==="youtu.be"){
+
+            return url.pathname
+                .split("/")
+                .filter(Boolean)[0]||null;
+
+        }
+
+        if(
+            host==="youtube.com" ||
+            host==="youtube-nocookie.com"
+        ){
+
+            if(url.pathname==="/watch"){
+
+                return url.searchParams.get("v");
+
+            }
+
+            if(url.pathname.startsWith("/shorts/")){
+
+                return url.pathname
+                    .split("/")[2]||null;
+
+            }
+
+            if(url.pathname.startsWith("/embed/")){
+
+                return url.pathname
+                    .split("/")[2]||null;
+
+            }
+
+        }
+
+    }catch(e){}
+
+    return null;
+}
+
+
+function normalizeSiteUrl(value){
+
+    if(!value) return null;
+
+    value=value.trim();
+
+    try{
+
+        const url=new URL(value);
+
+        if(
+            url.protocol!=="http:" &&
+            url.protocol!=="https:"
+        ){
+
+            return null;
+
+        }
+
+        return url.href;
+
+    }catch(e){
+
+        return null;
+
+    }
+}
+
+
+function colorForId(id){
+
+    let hash=0;
+
+    const str=String(id||"x");
+
+    for(let i=0;i<str.length;i++){
+
+        hash=
+            (hash*31+
+            str.charCodeAt(i))>>>0;
+
+    }
+
+    return AVATAR_COLORS[
+        hash%AVATAR_COLORS.length
+    ];
+}
+
+
+/* =====================================================
+   CREER SALLE
+===================================================== */
+
+function createRoom(){
+
+    const name=
+        document
+        .getElementById("hostName")
+        .value
+        .trim();
+
+    const input=
+        document
+        .getElementById("initialVideo")
+        .value
+        .trim();
+
+
+    if(!name){
+
+        toast("Choisis un pseudo.");
+
+        return;
+
+    }
+
+
+    if(contentType==="youtube"){
+
+        const videoId=getYouTubeId(input);
+
+        if(!videoId){
+
+            toast("Lien YouTube invalide.");
+
+            return;
+
+        }
+
+        currentVideoId=videoId;
+
+    }else{
+
+        const url=normalizeSiteUrl(input);
+
+        if(!url){
+
+            toast("URL du site invalide.");
+
+            return;
+
+        }
+
+        currentSiteUrl=url;
+
+    }
+
+
+    myName=name.substring(0,20);
+
+    localStorage.setItem(
+        "wtaName",
+        myName
+    );
+
+
+    roomId=generateRoomId();
+
+    isHost=true;
+
+    setStatus(
+        "Création...",
+        "pending"
+    );
+
+
+    peer=new Peer(
+        PEER_PREFIX+roomId
+    );
+
+
+    peer.on("open",function(id){
+
+        myId=id;
+
+        users[myId]={
+            name:myName,
+            host:true
+        };
+
+
+        updateRoomURL();
+
+        openRoom();
+
+        setStatus(
+            "En ligne",
+            "on"
+        );
+
+
+        if(contentType==="youtube"){
+
+            loadYouTubeAPI();
+
+        }else{
+
+            loadSite(
+                currentSiteUrl,
+                false
+            );
+
+        }
+
+    });
+
+
+    peer.on(
+        "connection",
+        handleIncomingConnection
+    );
+
+
+    peer.on(
+        "error",
+        handlePeerError
+    );
+}
+
+
+/* =====================================================
+   REJOINDRE
+===================================================== */
+
+function joinRoom(){
+
+    let name=
+        localStorage.getItem(
+            "wtaName"
+        );
+
+
+    if(!name){
+
+        name=
+            prompt(
+                "Choisis ton pseudo :"
+            )||"";
+
+    }
+
+
+    myName=
+        name
+        .trim()
+        .substring(0,20)||"Invité";
+
+
+    localStorage.setItem(
+        "wtaName",
+        myName
+    );
+
+
+    isHost=false;
+
+    setStatus(
+        "Connexion...",
+        "pending"
+    );
+
+
+    peer=new Peer();
+
+
+    peer.on("open",function(id){
+
+        myId=id;
+
+
+        hostConnection=
+            peer.connect(
+                PEER_PREFIX+roomId,
+                {reliable:true}
+            );
+
+
+        hostConnection.on(
+            "open",
+            function(){
+
+                setStatus(
+                    "Connecté",
+                    "on"
+                );
+
+
+                hostConnection.send({
+
+                    type:"hello",
+
+                    name:myName,
+
+                    id:myId
+
+                });
+
+
+                openRoom();
+
+            }
+        );
+
+
+        hostConnection.on(
+            "data",
+            handleClientMessage
+        );
+
+
+        hostConnection.on(
+            "close",
+            function(){
+
+                setStatus(
+                    "Hôte déconnecté"
+                );
+
+                toast(
+                    "L'hôte a quitté la salle."
+                );
+
+            }
+        );
+
+    });
+
+
+    peer.on(
+        "error",
+        handlePeerError
+    );
+}
+
+
+/* =====================================================
+   CONNEXIONS
+===================================================== */
+
+function handleIncomingConnection(conn){
+
+    connections.set(
+        conn.peer,
+        conn
+    );
+
+
+    conn.on(
+        "data",
+        function(data){
+
+            handleHostMessage(
+                conn,
+                data
+            );
+
+        }
+    );
+
+
+    conn.on(
+        "close",
+        function(){
+
+            const id=
+                conn.userId||
+                conn.peer;
+
+
+            connections.delete(
+                conn.peer
+            );
+
+
+            delete users[id];
+
+            broadcastUsers();
+
+        }
+    );
+}
+
+
+/* =====================================================
+   OUVRIR SALLE
+===================================================== */
+
+function openRoom(){
+
+    home.classList.add("hidden");
+
+    room.classList.remove("hidden");
+
+
+    document
+        .getElementById("roomCode")
+        .textContent=roomId;
+
+
+    document
+        .getElementById("roomChip")
+        .classList.remove("hidden");
+
+
+    document
+        .getElementById("shareBtn")
+        .classList.remove("hidden");
+
+
+    if(isHost){
+
+        document
+            .getElementById("editVideoBtn")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("hostControls")
+            .classList.remove("hidden");
+
+    }else{
+
+        document
+            .getElementById("syncNote")
+            .classList.remove("hidden");
+
+    }
+
+
+    updateUsers();
+
+}
+
+
+function createRoomLink(){
+
+    return window.location.origin+
+        window.location.pathname+
+        "?room="+
+        encodeURIComponent(roomId);
+
+}
+
+
+function updateRoomURL(){
+
+    window.history.replaceState(
+        {},
+        "",
+        "?room="+
+        encodeURIComponent(roomId)
+    );
+
+}
+
+
+async function copyRoomLink(){
+
+    try{
+
+        await navigator.clipboard.writeText(
+            createRoomLink()
+        );
+
+        toast("Lien copié.");
+
+    }catch(e){
+
+        toast(
+            "Impossible de copier le lien."
+        );
+
+    }
+}
+
+
+/* =====================================================
+   YOUTUBE API
+===================================================== */
+
+function loadYouTubeAPI(){
+
+    if(
+        window.YT &&
+        window.YT.Player
+    ){
+
+        createPlayer();
+
+        return;
+
+    }
+
+
+    if(
+        document.getElementById(
+            "youtube-api-script"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    const s=
+        document.createElement("script");
+
+
+    s.id=
+        "youtube-api-script";
+
+
+    s.src=
+        "https://www.youtube.com/iframe_api";
+
+
+    document.head.appendChild(s);
+
+}
+
+
+window.onYouTubeIframeAPIReady=
+    function(){
+
+        createPlayer();
+
+    };
+
+
+function createPlayer(){
+
+    if(!currentVideoId) return;
+
+
+    siteFrame.style.display="none";
+
+    siteBlocked.classList.remove("show");
+
+    videoEmpty.classList.add("hidden");
+
+
+    if(player){
+
+        applyingRemoteState=true;
+
+        player.loadVideoById(
+            currentVideoId
+        );
+
+        setTimeout(
+            function(){
+
+                applyingRemoteState=false;
+
+            },
+            800
+        );
+
+        return;
+
+    }
+
+
+    player=
+        new YT.Player(
+            "player",
+            {
+
+                width:"100%",
+
+                height:"100%",
+
+                videoId:
+                    currentVideoId,
+
+                playerVars:{
+
+                    autoplay:0,
+
+                    controls:
+                        isHost?1:0,
+
+                    rel:0,
+
+                    playsinline:1,
+
+                    modestbranding:1,
+
+                    iv_load_policy:3
+
+                },
+
+
+                events:{
+
+                    onReady:function(){
+
+                        playerReady=true;
+
+                        videoEmpty
+                            .classList
+                            .add("hidden");
+
+
+                        document
+                            .getElementById(
+                                "modeBadge"
+                            )
+                            .textContent=
+                                "YouTube";
+
+
+                        document
+                            .getElementById(
+                                "modeBadge"
+                            )
+                            .classList
+                            .remove("hidden");
+
+
+                        document
+                            .getElementById(
+                                "nowPlaying"
+                            )
+                            .textContent=
+                                "YouTube";
+
+
+                        if(
+                            !isHost &&
+                            hostConnection &&
+                            hostConnection.open
+                        ){
+
+                            hostConnection.send({
+
+                                type:
+                                    "requestState"
+
+                            });
+
+                        }
+
+
+                        if(isHost){
+
+                            startSyncTimer();
+
+                        }
+
+                    },
+
+
+                    onStateChange:
+                        handlePlayerState,
+
+
+                    onError:
+                        handleYouTubeError
+
+                }
+
+            }
+        );
+
+}
+
+
+function getPlayerState(){
+
+    if(
+        !playerReady||
+        !player
+    ){
+
+        return {
+            state:2,
+            time:0
+        };
+
+    }
+
+
+    return {
+
+        state:
+            player.getPlayerState(),
+
+        time:
+            player.getCurrentTime()
+
+    };
+
+}
+
+
+function handlePlayerState(){
+
+    if(
+        !playerReady||
+        applyingRemoteState||
+        !isHost||
+        contentType!=="youtube"
+    ){
+
+        return;
+
+    }
+
+
+    const s=
+        getPlayerState();
+
+
+    lastHostState=s.state;
+
+    lastHostTime=s.time;
+
+
+    broadcast({
+
+        type:"sync",
+
+        state:s.state,
+
+        time:s.time,
+
+        videoId:currentVideoId,
+
+        contentType:"youtube"
+
+    });
+
+}
+
+
+function startSyncTimer(){
+
+    stopSyncTimer();
+
+    if(!isHost) return;
+
+
+    syncTimer=
+        setInterval(
+            function(){
+
+                if(
+                    !isHost||
+                    !playerReady||
+                    document.hidden||
+                    contentType!=="youtube"
+                ){
+
+                    return;
+
+                }
+
+
+                const s=
+                    getPlayerState();
+
+
+                if(
+                    Math.abs(
+                        s.time-
+                        lastHostTime
+                    )>1||
+                    s.state!==lastHostState
+                ){
+
+                    broadcast({
+
+                        type:"sync",
+
+                        state:s.state,
+
+                        time:s.time,
+
+                        videoId:
+                            currentVideoId,
+
+                        contentType:
+                            "youtube"
+
+                    });
+
+                }
+
+
+                lastHostState=
+                    s.state;
+
+                lastHostTime=
+                    s.time;
+
+            },
+            500
+        );
+
+}
+
+
+function stopSyncTimer(){
+
+    if(syncTimer){
+
+        clearInterval(
+            syncTimer
+        );
+
+        syncTimer=null;
+
+    }
+
+}
+
+
+document.addEventListener(
+    "visibilitychange",
+    function(){
+
+        if(!isHost) return;
+
+        if(document.hidden){
+
+            stopSyncTimer();
+
+        }else{
+
+            startSyncTimer();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   CONTROLES YOUTUBE
+===================================================== */
+
+function pauseEveryone(){
+
+    if(
+        !isHost||
+        !playerReady||
+        contentType!=="youtube"
+    ){
+
+        return;
+
+    }
+
+
+    const time=
+        player.getCurrentTime();
+
+
+    applyingRemoteState=true;
+
+    player.pauseVideo();
+
+
+    setTimeout(
+        function(){
+
+            applyingRemoteState=false;
+
+        },
+        300
+    );
+
+
+    broadcast({
+
+        type:"sync",
+
+        state:2,
+
+        time:time,
+
+        videoId:
+            currentVideoId,
+
+        contentType:
+            "youtube"
+
+    });
+
+
+    lastHostState=2;
+
+    lastHostTime=time;
+
+}
+
+
+function playEveryone(){
+
+    if(
+        !isHost||
+        !playerReady||
+        contentType!=="youtube"
+    ){
+
+        return;
+
+    }
+
+
+    const time=
+        player.getCurrentTime();
+
+
+    applyingRemoteState=true;
+
+    player.playVideo();
+
+
+    setTimeout(
+        function(){
+
+            applyingRemoteState=false;
+
+        },
+        300
+    );
+
+
+    broadcast({
+
+        type:"sync",
+
+        state:1,
+
+        time:time,
+
+        videoId:
+            currentVideoId,
+
+        contentType:
+            "youtube"
+
+    });
+
+
+    lastHostState=1;
+
+    lastHostTime=time;
+
+}
+
+
+/* =====================================================
+   ETAT DISTANT YOUTUBE
+===================================================== */
+
+function applyRemoteState(
+    state,
+    time,
+    videoId
+){
+
+    if(
+        contentType!=="youtube"
+    ){
+
+        return;
+
+    }
+
+
+    if(
+        !playerReady||
+        !player
+    ){
+
+        currentVideoId=
+            videoId;
+
+        return;
+
+    }
+
+
+    applyingRemoteState=true;
+
+
+    if(
+        videoId &&
+        videoId!==currentVideoId
+    ){
+
+        currentVideoId=
+            videoId;
+
+
+        player.loadVideoById(
+            videoId
+        );
+
+
+        setTimeout(
+            function(){
+
+                if(playerReady){
+
+                    player.seekTo(
+                        Number(time)||0,
+                        true
+                    );
+
+                    applyPlayPause(
+                        state
+                    );
+
+                }
+
+                applyingRemoteState=false;
+
+            },
+            900
+        );
+
+
+        return;
+
+    }
+
+
+    const localTime=
+        player.getCurrentTime();
+
+
+    if(
+        Math.abs(
+            localTime-
+            Number(time||0)
+        )>.5
+    ){
+
+        player.seekTo(
+            Number(time)||0,
+            true
+        );
+
+    }
+
+
+    applyPlayPause(
+        state
+    );
+
+
+    setTimeout(
+        function(){
+
+            applyingRemoteState=false;
+
+        },
+        350
+    );
+
+}
+
+
+function applyPlayPause(state){
+
+    if(!player) return;
+
+
+    if(Number(state)===1){
+
+        player.playVideo();
+
+    }else if(
+        Number(state)===2||
+        Number(state)===0
+    ){
+
+        player.pauseVideo();
+
+    }
+
+}
+
+
+/* =====================================================
+   SITE WEB
+===================================================== */
+
+function loadSite(
+    url,
+    broadcastChange=true
+){
+
+    const cleanUrl=
+        normalizeSiteUrl(url);
+
+
+    if(!cleanUrl){
+
+        toast(
+            "URL du site invalide."
+        );
+
+        return false;
+
+    }
+
+
+    currentSiteUrl=
+        cleanUrl;
+
+    contentType=
+        "website";
+
+
+    stopSyncTimer();
+
+
+    if(player){
+
+        try{
+
+            player.stopVideo();
+
+        }catch(e){}
+
+    }
+
+
+    playerReady=false;
+
+
+    document
+        .getElementById(
+            "player"
+        )
+        .style.display="none";
+
+
+    siteBlocked
+        .classList
+        .remove("show");
+
+
+    videoEmpty
+        .classList
+        .add("hidden");
+
+
+    siteFrame.style.display="block";
+
+
+    siteFrame.src=
+        cleanUrl;
+
+
+    document
+        .getElementById(
+            "modeBadge"
+        )
+        .textContent=
+            "Site web";
+
+
+    document
+        .getElementById(
+            "modeBadge"
+        )
+        .classList
+        .remove("hidden");
+
+
+    document
+        .getElementById(
+            "nowPlaying"
+        )
+        .textContent=
+            cleanUrl;
+
+
+    if(
+        broadcastChange &&
+        isHost
+    ){
+
+        broadcast({
+
+            type:"siteChange",
+
+            url:cleanUrl
+
+        });
+
+    }
+
+
+    /*
+       On ne peut pas détecter parfaitement
+       si un site bloque X-Frame-Options/CSP
+       depuis le navigateur.
+
+       On affiche donc l'iframe normalement.
+       Si le navigateur bloque l'intégration,
+       le navigateur montrera son propre refus.
+    */
+
+
+    return true;
+
+}
+
+
+/* =====================================================
+   CHANGER CONTENU
+===================================================== */
+
+function toggleEditContent(){
+
+    document
+        .getElementById(
+            "editVideoRow"
+        )
+        .classList
+        .toggle("open");
+
+}
+
+
+function changeContent(){
+
+    if(!isHost){
+
+        toast(
+            "Seul l'hôte peut changer le contenu."
+        );
+
+        return;
+
+    }
+
+
+    const input=
+        document.getElementById(
+            "newVideo"
+        );
+
+
+    const value=
+        input.value.trim();
+
+
+    if(!value){
+
+        toast(
+            "Entre une URL."
+        );
+
+        return;
+
+    }
+
+
+    const ytId=
+        getYouTubeId(value);
+
+
+    /*
+       Si c'est YouTube,
+       on garde automatiquement
+       le mode YouTube.
+    */
+
+    if(ytId){
+
+        changeVideoById(
+            ytId
+        );
+
+    }else{
+
+        const siteUrl=
+            normalizeSiteUrl(value);
+
+
+        if(!siteUrl){
+
+            toast(
+                "URL invalide."
+            );
+
+            return;
+
+        }
+
+
+        changeSite(
+            siteUrl,
+            true
+        );
+
+
+        const message=
+            "🌐 Nouveau site chargé pour tout le monde.";
+
+
+        addMessage(
+            null,
+            message,
+            false,
+            false,
+            true
+        );
+
+
+        broadcast({
+
+            type:"chat",
+
+            isSystem:true,
+
+            message:message
+
+        });
+
+    }
+
+
+    input.value="";
+
+    document
+        .getElementById(
+            "editVideoRow"
+        )
+        .classList
+        .remove("open");
+
+}
+
+
+function changeVideoById(id){
+
+    if(!isHost) return;
+
+
+    contentType=
+        "youtube";
+
+
+    currentVideoId=
+        id;
+
+
+    currentSiteUrl=
+        null;
+
+
+    siteFrame.style.display=
+        "none";
+
+
+    siteBlocked
+        .classList
+        .remove("show");
+
+
+    document
+        .getElementById(
+            "player"
+        )
+        .style.display=
+            "block";
+
+
+    document
+        .getElementById(
+            "modeBadge"
+        )
+        .textContent=
+            "YouTube";
+
+
+    document
+        .getElementById(
+            "modeBadge"
+        )
+        .classList
+        .remove("hidden");
+
+
+    if(
+        window.YT &&
+        window.YT.Player
+    ){
+
+        createPlayer();
+
+    }else{
+
+        loadYouTubeAPI();
+
+    }
+
+
+    const label=
+        "▶️ Nouvelle vidéo YouTube pour tout le monde.";
+
+
+    broadcast({
+
+        type:"youtubeChange",
+
+        videoId:id
+
+    });
+
+
+    addMessage(
+        null,
+        label,
+        false,
+        false,
+        true
+    );
+
+
+    broadcast({
+
+        type:"chat",
+
+        isSystem:true,
+
+        message:label
+
+    });
+
+
+    lastHostState=2;
+
+    lastHostTime=0;
+
+}
+
+
+/* =====================================================
+   ROOM STATE
+===================================================== */
+
+function sendRoomState(conn){
+
+    if(!isHost) return;
+
+
+    if(contentType==="youtube"){
+
+        const s=
+            getPlayerState();
+
+
+        conn.send({
+
+            type:"roomState",
+
+            contentType:"youtube",
+
+            videoId:
+                currentVideoId,
+
+            state:
+                s.state,
+
+            time:
+                s.time,
+
+            users:
+                users
+
+        });
+
+    }else{
+
+        conn.send({
+
+            type:"roomState",
+
+            contentType:"website",
+
+            siteUrl:
+                currentSiteUrl,
+
+            users:
+                users
+
+        });
+
+    }
+
+}
+
+
+/* =====================================================
+   HOTE
+===================================================== */
+
+function handleHostMessage(
+    conn,
+    data
+){
+
+    if(!data||!data.type) return;
+
+
+    if(data.type==="hello"){
+
+        const id=
+            data.id||
+            conn.peer;
+
+
+        users[id]={
+
+            name:
+                data.name||
+                "Invité",
+
+            host:false
+
+        };
+
+
+        conn.userId=id;
+
+
+        updateUsers();
+
+        broadcastUsers();
+
+        sendRoomState(conn);
+
+        return;
+
+    }
+
+
+    if(
+        data.type==="requestState"
+    ){
+
+        sendRoomState(conn);
+
+        return;
+
+    }
+
+
+    if(
+        data.type==="requestChangeVideo"
+    ){
+
+        const id=
+            String(
+                data.videoId||""
+            );
+
+
+        if(
+            /^[A-Za-z0-9_-]{6,}$/.test(id)
+        ){
+
+            changeVideoById(id);
+
+        }
+
+        return;
+
+    }
+
+
+    if(
+        data.type==="requestSite"
+    ){
+
+        const url=
+            normalizeSiteUrl(
+                data.url
+            );
+
+
+        if(!url) return;
+
+
+        loadSite(
+            url,
+            true
+        );
+
+
+        const label=
+            (data.name||
+            "Un invité")+
+            " a demandé d'ouvrir ce site.";
+
+
+        addMessage(
+            null,
+            label,
+            false,
+            false,
+            true
+        );
+
+
+        broadcast({
+
+            type:"chat",
+
+            isSystem:true,
+
+            message:label
+
+        });
+
+
+        return;
+
+    }
+
+
+    if(data.type==="chat"){
+
+        const message={
+
+            type:"chat",
+
+            name:
+                data.name||
+                "Invité",
+
+            message:
+                String(
+                    data.message||""
+                ).substring(0,300),
+
+            isContentLink:
+                !!data.isContentLink,
+
+            contentUrl:
+                data.contentUrl||
+                null,
+
+            sender:
+                data.sender||
+                conn.peer
+
+        };
+
+
+        broadcast(message);
+
+
+        addMessage(
+
+            message.name,
+
+            message.message,
+
+            false,
+
+            false,
+
+            false,
+
+            message.isContentLink,
+
+            message.contentUrl,
+
+            message.sender
+
+        );
+
+
+        return;
+
+    }
+
+}
+
+
+/* =====================================================
+   CLIENT
+===================================================== */
+
+function handleClientMessage(data){
+
+    if(!data||!data.type) return;
+
+
+    if(data.type==="roomState"){
+
+        contentType=
+            data.contentType||
+            "youtube";
+
+
+        users=
+            data.users||
+            {};
+
+
+        updateUsers();
+
+
+        if(contentType==="youtube"){
+
+            currentVideoId=
+                data.videoId;
+
+
+            currentSiteUrl=
+                null;
+
+
+            document
+                .getElementById(
+                    "player"
+                )
+                .style.display=
+                    "block";
+
+
+            siteFrame.style.display=
+                "none";
+
+
+            loadYouTubeAPI();
+
+
+            if(playerReady){
+
+                applyRemoteState(
+                    data.state,
+                    data.time,
+                    data.videoId
+                );
+
+            }
+
+        }else{
+
+            currentSiteUrl=
+                data.siteUrl;
+
+
+            siteFrame.style.display=
+                "block";
+
+
+            document
+                .getElementById(
+                    "player"
+                )
+                .style.display=
+                    "none";
+
+
+            if(currentSiteUrl){
+
+                loadSite(
+                    currentSiteUrl,
+                    false
+                );
+
+            }
+
+        }
+
+
+        return;
+
+    }
+
+
+    if(data.type==="sync"){
+
+        if(
+            data.contentType==="youtube"
+        ){
+
+            contentType=
+                "youtube";
+
+            applyRemoteState(
+                data.state,
+                data.time,
+                data.videoId
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    if(data.type==="youtubeChange"){
+
+        contentType=
+            "youtube";
+
+
+        currentVideoId=
+            data.videoId;
+
+
+        currentSiteUrl=
+            null;
+
+
+        siteFrame.style.display=
+            "none";
+
+
+        document
+            .getElementById(
+                "player"
+            )
+            .style.display=
+                "block";
+
+
+        loadYouTubeAPI();
+
+
+        return;
+
+    }
+
+
+    if(data.type==="siteChange"){
+
+        contentType=
+            "website";
+
+
+        currentSiteUrl=
+            data.url;
+
+
+        loadSite(
+            data.url,
+            false
+        );
+
+
+        return;
+
+    }
+
+
+    if(data.type==="users"){
+
+        users=
+            data.users||
+            {};
+
+
+        if(!users[myId]){
+
+            users[myId]={
+
+                name:
+                    myName,
+
+                host:false
+
+            };
+
+        }
+
+
+        updateUsers();
+
+        return;
+
+    }
+
+
+    if(data.type==="chat"){
+
+        if(data.isSystem){
+
+            addMessage(
+                null,
+                data.message,
+                false,
+                false,
+                true
+            );
+
+            return;
+
+        }
+
+
+        addMessage(
+
+            data.name,
+
+            data.message,
+
+            false,
+
+            data.sender===myId,
+
+            false,
+
+            data.isContentLink,
+
+            data.contentUrl,
+
+            data.sender
+
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   PARTICIPANTS
+===================================================== */
+
+function broadcastUsers(){
+
+    if(!isHost) return;
+
+
+    broadcast({
+
+        type:"users",
+
+        users:users
+
+    });
+
+
+    updateUsers();
+
+}
+
+
+function broadcast(data){
+
+    connections.forEach(
+        function(conn){
+
+            if(
+                conn&&
+                conn.open
+            ){
+
+                try{
+
+                    conn.send(data);
+
+                }catch(e){
+
+                    console.error(e);
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+function updateUsers(){
+
+    const avatars=
+        document.getElementById(
+            "peopleAvatars"
+        );
+
+
+    const fragment=
+        document.createDocumentFragment();
+
+
+    Object.entries(users)
+        .forEach(
+            function([id,user]){
+
+                const div=
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className=
+                    "avatar"+
+                    (user.host?
+                        " host":
+                        "");
+
+
+                div.style.background=
+                    colorForId(id);
+
+
+                div.title=
+                    (user.name||
+                    "Invité")+
+                    (id===myId?
+                        " (toi)":
+                        "")+
+                    (user.host?
+                        " — hôte":
+                        "");
+
+
+                div.textContent=
+                    (user.name||
+                    "?")
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase();
+
+
+                fragment.appendChild(div);
+
+            }
+        );
+
+
+    avatars.innerHTML="";
+
+    avatars.appendChild(
+        fragment
+    );
+
+
+    const count=
+        Object.keys(users)
+        .length;
+
+
+    document
+        .getElementById(
+            "peopleCount"
+        )
+        .textContent=
+            count+
+            (count>1?
+                " personnes":
+                " personne");
+
+}
+
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+function sendChat(){
+
+    const input=
+        document.getElementById(
+            "chatInput"
+        );
+
+
+    const raw=
+        input.value.trim();
+
+
+    if(!raw) return;
+
+
+    const youtubeId=
+        getYouTubeId(raw);
+
+
+    const siteUrl=
+        normalizeSiteUrl(raw);
+
+
+    const isContentLink=
+        !!youtubeId||
+        !!siteUrl;
+
+
+    const data={
+
+        type:"chat",
+
+        name:
+            myName,
+
+        message:
+            raw.substring(0,300),
+
+        isContentLink:
+            isContentLink,
+
+        contentUrl:
+            youtubeId?
+                raw:
+                siteUrl,
+
+        sender:
+            myId
+
+    };
+
+
+    addMessage(
+
+        myName,
+
+        data.message,
+
+        false,
+
+        true,
+
+        false,
+
+        isContentLink,
+
+        data.contentUrl,
+
+        myId
+
+    );
+
+
+    if(isHost){
+
+        broadcast(data);
+
+    }else if(
+        hostConnection&&
+        hostConnection.open
+    ){
+
+        hostConnection.send(data);
+
+    }
+
+
+    input.value="";
+
+}
+
+
+/* =====================================================
+   AFFICHER MESSAGE
+===================================================== */
+
+function addMessage(
+    name,
+    message,
+    unusedGif,
+    isMe,
+    isSystem,
+    isContentLink,
+    contentUrl,
+    senderId
+){
+
+    const chat=
+        document.getElementById(
+            "chat"
+        );
+
+
+    if(isSystem){
+
+        const sys=
+            document.createElement(
+                "div"
+            );
+
+
+        sys.className=
+            "system-message";
+
+
+        sys.textContent=
+            message;
+
+
+        chat.appendChild(sys);
+
+
+        chat.scrollTop=
+            chat.scrollHeight;
+
+
+        return;
+
+    }
+
+
+    const wrap=
+        document.createElement(
+            "div"
+        );
+
+
+    wrap.className=
+        "message"+
+        (isMe?" me":"");
+
+
+    const nameEl=
+        document.createElement(
+            "div"
+        );
+
+
+    nameEl.className=
+        "name";
+
+
+    nameEl.textContent=
+        name;
+
+
+    nameEl.style.color=
+        colorForId(
+            senderId||
+            name
+        );
+
+
+    const bubble=
+        document.createElement(
+            "div"
+        );
+
+
+    if(
+        isContentLink &&
+        contentUrl
+    ){
+
+        bubble.className=
+            "bubble link-card";
+
+
+        const info=
+            document.createElement(
+                "div"
+            );
+
+
+        info.className=
+            "link-info";
+
+
+        const labelEl=
+            document.createElement(
+                "div"
+            );
+
+
+        labelEl.className=
+            "link-label";
+
+
+        const ytId=
+            getYouTubeId(
+                contentUrl
+            );
+
+
+        labelEl.textContent=
+            ytId?
+                "🎬 YouTube":
+                "🌐 Site web";
+
+
+        const urlEl=
+            document.createElement(
+                "div"
+            );
+
+
+        urlEl.className=
+            "link-url";
+
+
+        urlEl.textContent=
+            contentUrl;
+
+
+        info.appendChild(
+            labelEl
+        );
+
+
+        info.appendChild(
+            urlEl
+        );
+
+
+        const playBtn=
+            document.createElement(
+                "button"
+            );
+
+
+        playBtn.innerHTML=`
+            <svg class="icon"
+                 viewBox="0 0 24 24"
+                 fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Ouvrir</span>
+        `;
+
+
+        playBtn.addEventListener(
+            "click",
+            function(){
+
+                const id=
+                    getYouTubeId(
+                        contentUrl
+                    );
+
+
+                if(id){
+
+                    if(isHost){
+
+                        changeVideoById(
+                            id
+                        );
+
+                    }else{
+
+                        if(
+                            hostConnection&&
+                            hostConnection.open
+                        ){
+
+                            hostConnection.send({
+
+                                type:
+                                    "requestChangeVideo",
+
+                                videoId:
+                                    id,
+
+                                name:
+                                    myName
+
+                            });
+
+
+                            toast(
+                                "Demande envoyée à l'hôte."
+                            );
+
+                        }
+
+                    }
+
+                }else{
+
+                    const url=
+                        normalizeSiteUrl(
+                            contentUrl
+                        );
+
+
+                    if(!url) return;
+
+
+                    if(isHost){
+
+                        loadSite(
+                            url,
+                            true
+                        );
+
+                    }else{
+
+                        if(
+                            hostConnection&&
+                            hostConnection.open
+                        ){
+
+                            hostConnection.send({
+
+                                type:
+                                    "requestSite",
+
+                                url:url,
+
+                                name:
+                                    myName
+
+                            });
+
+
+                            toast(
+                                "Demande envoyée à l'hôte."
+                            );
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        bubble.appendChild(
+            info
+        );
+
+
+        bubble.appendChild(
+            playBtn
+        );
+
+    }else{
+
+        bubble.className=
+            "bubble";
+
+
+        bubble.textContent=
+            message;
+
+    }
+
+
+    wrap.appendChild(
+        nameEl
+    );
+
+
+    wrap.appendChild(
+        bubble
+    );
+
+
+    chat.appendChild(
+        wrap
+    );
+
+
+    chat.scrollTop=
+        chat.scrollHeight;
+
+}
+
+
+/* =====================================================
+   CHAT ENTER
+===================================================== */
+
+document
+    .getElementById("chatInput")
+    .addEventListener(
+        "keydown",
+        function(e){
+
+            if(e.key==="Enter"){
+
+                e.preventDefault();
+
+                sendChat();
+
+            }
+
+        }
+    );
+
+
+/* =====================================================
+   SAUVEGARDE PSEUDO
+===================================================== */
+
+let nameSaveTimeout;
+
+
+document
+    .getElementById("hostName")
+    .addEventListener(
+        "input",
+        function(){
+
+            clearTimeout(
+                nameSaveTimeout
+            );
+
+
+            const value=
+                this.value;
+
+
+            nameSaveTimeout=
+                setTimeout(
+                    function(){
+
+                        localStorage.setItem(
+                            "wtaName",
+                            value
+                        );
+
+                    },
+                    400
+                );
+
+        }
+    );
+
+
+/* =====================================================
+   ERREURS PEER
+===================================================== */
+
+function handlePeerError(error){
+
+    console.error(
+        "PeerJS:",
+        error
+    );
+
+
+    if(
+        error.type===
+        "peer-unavailable"
+    ){
+
+        toast(
+            "La salle n'existe plus ou l'hôte est hors ligne."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        error.type===
+        "unavailable-id"
+    ){
+
+        toast(
+            "Cette salle existe déjà."
+        );
+
+        return;
+
+    }
+
+
+    toast(
+        "Erreur de connexion."
+    );
+
+}
+
+
+/* =====================================================
+   ERREURS YOUTUBE
+===================================================== */
+
+function handleYouTubeError(event){
+
+    let message=
+        "Impossible de lire cette vidéo.";
+
+
+    if(event.data===2){
+
+        message=
+            "Lien YouTube invalide.";
+
+    }
+
+
+    if(event.data===5){
+
+        message=
+            "Cette vidéo ne peut pas être lue ici.";
+
+    }
+
+
+    if(event.data===100){
+
+        message=
+            "Cette vidéo est privée ou supprimée.";
+
+    }
+
+
+    if(
+        event.data===101||
+        event.data===150
+    ){
+
+        message=
+            "Cette vidéo interdit la lecture intégrée.";
+
+    }
+
+
+    toast(message);
+
+}
+
+
+/* =====================================================
+   CHARGEMENT
+===================================================== */
+
+window.addEventListener(
+    "load",
+    function(){
+
+        const params=
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const roomFromURL=
+            params.get("room");
+
+
+        if(!roomFromURL){
+
+            const saved=
+                localStorage.getItem(
+                    "wtaName"
+                );
+
+
+            if(saved){
+
+                document
+                    .getElementById(
+                        "hostName"
+                    )
+                    .value=saved;
+
+            }
+
+
+            return;
+
+        }
+
+
+        roomId=
+            roomFromURL
+            .toUpperCase()
+            .trim();
+
+
+        if(
+            !/^[A-Z0-9]{6}$/.test(
+                roomId
+            )
+        ){
+
+            toast(
+                "Lien de salle invalide."
+            );
+
+            return;
+
+        }
+
+
+        joinRoom();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
