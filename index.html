@@ -336,6 +336,7 @@ let syncTimer=null, lastHostTime=0, lastHostState=2;
 let selectedHomeType="youtube", selectedChangeType="youtube";
 let replyContext=null;
 let typingUsers={}, typingTimers={}, lastTypingSent=false, typingStopTimer=null;
+let pendingRemoval={};
 
 const home=document.getElementById("home");
 const room=document.getElementById("room");
@@ -460,8 +461,18 @@ function createRoom(){
     });
 
     peer.on("connection",handleIncomingConnection);
+    peer.on("disconnected",function(){ if(peer&&!peer.destroyed){ peer.reconnect(); } });
     peer.on("error",handlePeerError);
 }
+
+/* =====================================================
+   REJOINDRE + RECONNEXION AUTOMATIQUE
+   Si tu changes d'onglet/app (YouTube, Twitter...) ou perds
+   brièvement le réseau, on retente la connexion tout seul au
+   lieu d'afficher une erreur définitive.
+===================================================== */
+let reconnectAttempts=0;
+let reconnectTimer=null;
 
 function joinRoom(){
     let name=localStorage.getItem("wtaName");
@@ -476,36 +487,80 @@ function joinRoom(){
 
     peer.on("open",function(id){
         myId=id;
-        hostConnection=peer.connect(PEER_PREFIX+roomId,{reliable:true});
-
-        hostConnection.on("open",function(){
-            setStatus("Connecté","on");
-            hostConnection.send({type:"hello",name:myName,id:myId});
-            openRoom();
-        });
-
-        hostConnection.on("data",handleClientMessage);
-
-        hostConnection.on("close",function(){
-            setStatus("Hôte déconnecté");
-            toast("L'hôte a quitté la salle.");
-        });
+        connectToHost();
     });
 
+    peer.on("disconnected",function(){ if(peer&&!peer.destroyed){ peer.reconnect(); } });
     peer.on("error",handlePeerError);
 }
 
+function connectToHost(){
+    if(!peer||peer.destroyed) return;
+
+    hostConnection=peer.connect(PEER_PREFIX+roomId,{reliable:true});
+
+    hostConnection.on("open",function(){
+        reconnectAttempts=0;
+        clearTimeout(reconnectTimer);
+        setStatus("Connecté","on");
+        hostConnection.send({type:"hello",name:myName,id:myId});
+        openRoom();
+    });
+
+    hostConnection.on("data",handleClientMessage);
+    hostConnection.on("close",scheduleReconnect);
+    hostConnection.on("error",scheduleReconnect);
+}
+
+function scheduleReconnect(){
+    if(isHost) return;
+
+    setStatus("Reconnexion...","pending");
+    clearTimeout(reconnectTimer);
+
+    const delay=Math.min(1500*Math.pow(1.6,reconnectAttempts),15000);
+    reconnectAttempts++;
+
+    reconnectTimer=setTimeout(function(){
+        if(peer&&peer.destroyed){ return; }
+        if(peer&&peer.disconnected){ peer.reconnect(); }
+        connectToHost();
+    },delay);
+}
+
+/* Dès que tu reviens sur l'onglet, on retente tout de suite au
+   lieu d'attendre le prochain délai programmé */
+document.addEventListener("visibilitychange",function(){
+    if(document.hidden||isHost) return;
+    if(!hostConnection||!hostConnection.open){
+        clearTimeout(reconnectTimer);
+        reconnectAttempts=0;
+        connectToHost();
+    }
+});
+
 function handleIncomingConnection(conn){
+    const existingTimer=pendingRemoval[conn.peer];
+    if(existingTimer){ clearTimeout(existingTimer); delete pendingRemoval[conn.peer]; }
+
     connections.set(conn.peer,conn);
     conn.on("data",function(data){ handleHostMessage(conn,data); });
+
     conn.on("close",function(){
         const id=conn.userId||conn.peer;
         connections.delete(conn.peer);
-        delete users[id];
         delete typingUsers[id];
         clearTimeout(typingTimers[id]);
         renderTypingIndicator();
-        broadcastUsers();
+
+        /* On ne retire pas la personne tout de suite : elle a peut-être
+           juste changé d'onglet. On lui laisse une minute pour revenir. */
+        clearTimeout(pendingRemoval[id]);
+        pendingRemoval[id]=setTimeout(function(){
+            delete users[id];
+            delete pendingRemoval[id];
+            broadcastUsers();
+        },60000);
     });
 }
 
@@ -732,6 +787,8 @@ function handleHostMessage(conn,data){
 
     if(data.type==="hello"){
         const id=data.id||conn.peer;
+        clearTimeout(pendingRemoval[id]);
+        delete pendingRemoval[id];
         users[id]={name:data.name||"Invité",host:false};
         conn.userId=id;
         updateUsers();
@@ -1118,10 +1175,30 @@ document.getElementById("hostName").addEventListener("input",function(){
     nameSaveTimeout=setTimeout(function(){ localStorage.setItem("wtaName",value); },400);
 });
 
+const TRANSIENT_PEER_ERRORS=["network","server-error","socket-error","socket-closed","disconnected"];
+
 function handlePeerError(error){
     console.error("PeerJS:",error);
-    if(error.type==="peer-unavailable"){ toast("La salle n'existe plus ou l'hôte est hors ligne."); return; }
+
     if(error.type==="unavailable-id"){ toast("Cette salle existe déjà."); return; }
+
+    if(TRANSIENT_PEER_ERRORS.includes(error.type)){
+        /* Coupure réseau ou onglet mis en veille : on retente
+           tranquillement au lieu d'afficher une erreur définitive. */
+        if(!isHost){ scheduleReconnect(); }
+        else{ setStatus("Reconnexion...","pending"); }
+        return;
+    }
+
+    if(error.type==="peer-unavailable"){
+        if(!isHost){
+            /* L'hôte est peut-être juste temporairement hors ligne
+               (lui aussi en train de revenir d'un autre onglet). */
+            scheduleReconnect();
+        }
+        return;
+    }
+
     toast("Erreur de connexion.");
 }
 
