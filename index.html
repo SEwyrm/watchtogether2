@@ -1194,33 +1194,32 @@ function renderTypingIndicator(){
 ===================================================== */
 /* =====================================================
    GIFS ALEATOIRES
-   Une vingtaine de catégories ; un clic va chercher un GIF
-   aléatoire correspondant via l'API publique GIPHY.
+   Une vingtaine de GIFs réels, vérifiés et hébergés sur la CDN
+   officielle de GIPHY (pas d'appel API ni de clé requise, donc
+   pas de risque de plantage ou de limite de requêtes).
 ===================================================== */
 const GIF_CATEGORIES=[
-    {label:"LOL",tag:"laughing"},
-    {label:"Bravo",tag:"applause"},
-    {label:"Trop bien",tag:"excited"},
-    {label:"Oups",tag:"oops"},
-    {label:"Facepalm",tag:"facepalm"},
-    {label:"Fête",tag:"party"},
-    {label:"Amour",tag:"love"},
-    {label:"Oui",tag:"yes"},
-    {label:"Non",tag:"no"},
-    {label:"Salut",tag:"bye"},
-    {label:"Fatigué",tag:"sleepy"},
-    {label:"Popcorn",tag:"popcorn"},
-    {label:"Danse",tag:"dance"},
-    {label:"Choqué",tag:"shocked"},
-    {label:"Confus",tag:"confused"},
-    {label:"Cool",tag:"cool"},
-    {label:"Victoire",tag:"win"},
-    {label:"Ennui",tag:"bored"},
-    {label:"Merci",tag:"thank you"},
-    {label:"Coucou",tag:"hello"}
+    {label:"LOL",id:"aTXHpCN7TSpmE"},
+    {label:"Bravo",id:"w832CKAADJut6lBEOE"},
+    {label:"Trop bien",id:"Es7N4QEKFAKQ67eADS"},
+    {label:"Oups",id:"xUySTUkWi1Q0veIRmU"},
+    {label:"Facepalm",id:"14aUO0Mf7dWDXW"},
+    {label:"Fête",id:"l0MYt5jPR6QX5pnqM"},
+    {label:"Amour",id:"5kpRuktAKcNXy4p1is"},
+    {label:"Oui",id:"JBumCoLu1RimmgT1iV"},
+    {label:"Non",id:"MgXYDOOVCLqii7RVYo"},
+    {label:"Salut",id:"qLVGt6Go1dQFp4qVcg"},
+    {label:"Fatigué",id:"Qh4FSYVY3jvmeVjRur"},
+    {label:"Popcorn",id:"128UMaujdjX7Pi"},
+    {label:"Danse",id:"l0HlQPm37CW8A4zAs"},
+    {label:"Choqué",id:"t9Mbcz0Cr53VFGsb6j"},
+    {label:"Confus",id:"Z5xk7fGO5FjjTElnpT"},
+    {label:"Cool",id:"w2hGxjfmUiI3uWkm1K"},
+    {label:"Victoire",id:"SM8WjRqKBHFizvxz01"},
+    {label:"Énervé",id:"R2km9sVVEOWZdc2PEH"},
+    {label:"Merci",id:"10c9BEZyo8szo4"},
+    {label:"Coucou",id:"LrZdHVvhqEnECYi7mS"}
 ];
-
-const GIPHY_DEMO_KEY="dc6zaTOxFJmzC"; /* clé publique de démo fournie par GIPHY */
 
 function toggleGifPicker(){
     const picker=document.getElementById("gifPicker");
@@ -1235,34 +1234,14 @@ function toggleGifPicker(){
         btn.className="gif-chip";
         btn.type="button";
         btn.textContent=cat.label;
-        btn.addEventListener("click",function(){ pickRandomGif(cat.tag,btn); });
+        btn.addEventListener("click",function(){
+            sendGifMessage("https://media.giphy.com/media/"+cat.id+"/giphy.gif");
+            picker.classList.add("hidden");
+        });
         picker.appendChild(btn);
     });
 
     picker.classList.remove("hidden");
-}
-
-async function pickRandomGif(tag,btnEl){
-    const picker=document.getElementById("gifPicker");
-    const chips=picker.querySelectorAll(".gif-chip");
-    chips.forEach(function(c){ c.disabled=true; });
-
-    try{
-        const res=await fetch("https://api.giphy.com/v1/gifs/random?api_key="+GIPHY_DEMO_KEY+"&tag="+encodeURIComponent(tag)+"&rating=g");
-        const data=await res.json();
-        const url=data&&data.data&&data.data.images&&data.data.images.fixed_height
-            ? data.data.images.fixed_height.url
-            : null;
-
-        if(!url){ toast("Aucun GIF trouvé, réessaie."); return; }
-
-        sendGifMessage(url);
-        picker.classList.add("hidden");
-    }catch(e){
-        toast("Impossible de charger le GIF (vérifie ta connexion).");
-    }finally{
-        chips.forEach(function(c){ c.disabled=false; });
-    }
 }
 
 function sendGifMessage(url){
