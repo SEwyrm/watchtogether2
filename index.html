@@ -131,7 +131,7 @@ input::placeholder{color:#5f5878;}
 }
 .mini-player-close .icon{width:13px;height:13px;}
 
-.chat-col{display:flex;flex-direction:column;border-top:1px solid var(--border);height:420px;}
+.chat-col{display:flex;flex-direction:column;border-top:1px solid var(--border);height:420px;position:relative;}
 
 .chat-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);}
 .chat-title{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14.5px;}
@@ -175,6 +175,18 @@ input::placeholder{color:#5f5878;}
 
 .chat-input-row{display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--border);}
 .chat-input-row input{flex:1;height:44px;border-radius:999px;}
+
+.gif-bubble{padding:0;overflow:hidden;background:transparent;}
+.gif-bubble img{display:block;max-width:200px;max-height:200px;border-radius:14px;background:var(--surface-2);}
+
+.gif-picker{
+    position:absolute;left:14px;right:14px;bottom:68px;max-height:190px;overflow-y:auto;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:14px;
+    padding:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:5;box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+.gif-chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--text-dim);}
+.gif-chip:active{transform:scale(.94);}
+.gif-chip:disabled{opacity:.5;}
 
 @media(min-width:900px){
     .watch-panel{flex-direction:row;height:640px;}
@@ -332,7 +344,12 @@ input::placeholder{color:#5f5878;}
                 </button>
             </div>
 
+            <div id="gifPicker" class="gif-picker hidden"></div>
+
             <div class="chat-input-row">
+                <button id="gifBtn" class="icon-btn" onclick="toggleGifPicker()" title="Envoyer un GIF">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </button>
                 <input id="chatInput" type="text" maxlength="300" placeholder="Écris un message..." autocomplete="off">
                 <button class="icon-btn grad" onclick="sendChat()" title="Envoyer">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -471,17 +488,41 @@ function createRoom(){
     roomId=generateRoomId();
     isHost=true;
 
+    becomeHostPeer();
+}
+
+/* Reconstitue l'hôte après un rechargement de page (F5, fermeture
+   accidentelle de l'onglet puis retour sur le même lien...). Sans ça,
+   la personne qui a créé la salle redeviendrait un simple invité et
+   la salle resterait sans hôte pour l'autre personne. */
+let attemptingHostRecovery=false;
+
+function recreateAsHost(stored){
+    myName=stored.name||localStorage.getItem("wtaName")||"Hôte";
+    currentMediaType=stored.mediaType||"youtube";
+    currentVideoId=stored.videoId||null;
+    currentSiteUrl=stored.siteUrl||null;
+    roomId=stored.roomId;
+    isHost=true;
+    attemptingHostRecovery=true;
+
+    becomeHostPeer();
+}
+
+function becomeHostPeer(){
     setStatus("Création...","pending");
 
     peer=new Peer(PEER_PREFIX+roomId);
 
     peer.on("open",function(id){
+        attemptingHostRecovery=false;
         myId=id;
         users[myId]={name:myName,host:true};
         updateRoomURL();
         openRoom();
         setStatus("En ligne","on");
         loadMedia();
+        saveRoomState();
     });
 
     peer.on("connection",handleIncomingConnection);
@@ -489,14 +530,30 @@ function createRoom(){
     peer.on("error",handlePeerError);
 }
 
+/* Garde en mémoire qui héberge quoi, pour pouvoir reprendre la main
+   si l'hôte recharge accidentellement la page. */
+function saveRoomState(){
+    if(!roomId) return;
+    try{
+        localStorage.setItem("wtaRoomState",JSON.stringify({
+            roomId:roomId, isHost:isHost, mediaType:currentMediaType,
+            videoId:currentVideoId, siteUrl:currentSiteUrl, name:myName
+        }));
+    }catch(e){}
+}
+
 /* =====================================================
    REJOINDRE + RECONNEXION AUTOMATIQUE
    Si tu changes d'onglet/app (YouTube, Twitter...) ou perds
    brièvement le réseau, on retente la connexion tout seul au
-   lieu d'afficher une erreur définitive.
+   lieu d'afficher une erreur définitive. Après trop d'échecs
+   d'affilée, on arrête et on te laisse réessayer manuellement
+   plutôt que d'insister indéfiniment sur une salle qui n'existe
+   peut-être plus.
 ===================================================== */
 let reconnectAttempts=0;
 let reconnectTimer=null;
+const MAX_RECONNECT_ATTEMPTS=8;
 
 function joinRoom(){
     let name=localStorage.getItem("wtaName");
@@ -539,6 +596,12 @@ function connectToHost(){
 function scheduleReconnect(){
     if(isHost) return;
 
+    if(reconnectAttempts>=MAX_RECONNECT_ATTEMPTS){
+        setStatus("Salle injoignable","");
+        toast("Impossible de rejoindre l'hôte. Vérifie le lien ou réessaie plus tard.");
+        return;
+    }
+
     setStatus("Reconnexion...","pending");
     clearTimeout(reconnectTimer);
 
@@ -571,6 +634,12 @@ function handleIncomingConnection(conn){
     conn.on("data",function(data){ handleHostMessage(conn,data); });
 
     conn.on("close",function(){
+        /* Ne retirer cette connexion que si elle est toujours celle
+           enregistrée : si la personne s'est déjà reconnectée entre
+           temps, une connexion plus récente a pu prendre sa place et
+           il ne faut surtout pas la supprimer par erreur. */
+        if(connections.get(conn.peer)!==conn) return;
+
         const id=conn.userId||conn.peer;
         connections.delete(conn.peer);
         delete typingUsers[id];
@@ -596,8 +665,9 @@ function openRoom(){
     document.getElementById("roomChip").classList.remove("hidden");
     document.getElementById("shareBtn").classList.remove("hidden");
 
+    document.getElementById("editVideoBtn").classList.remove("hidden");
+
     if(isHost){
-        document.getElementById("editVideoBtn").classList.remove("hidden");
         document.getElementById("hostControls").classList.remove("hidden");
     }else{
         document.getElementById("syncNote").classList.remove("hidden");
@@ -997,18 +1067,18 @@ function toggleEditVideo(){
 }
 
 function changeMedia(){
-    if(!isHost){ toast("Seul l'hôte peut changer le contenu."); return; }
-
     const input=document.getElementById("newVideo");
     const value=input.value.trim();
 
     if(selectedChangeType==="youtube"){
         const id=getYouTubeId(value);
         if(!id){ toast("Lien YouTube invalide."); return; }
-        changeMediaTo("youtube",id,null,myName);
+        if(isHost){ changeMediaTo("youtube",id,null,myName); }
+        else{ requestPlayMedia("youtube",id,null,null); }
     }else{
         if(!isValidHttpUrl(value)){ toast("URL de site invalide."); return; }
-        changeMediaTo("site",null,value,myName);
+        if(isHost){ changeMediaTo("site",null,value,myName); }
+        else{ requestPlayMedia("site",null,value,null); }
     }
 
     input.value="";
@@ -1034,6 +1104,8 @@ function changeMediaTo(mediaType,videoId,siteUrl,requesterName){
         applyingRemoteState=false;
         broadcast({type:"sync",mediaType:"site",url:siteUrl});
     }
+
+    saveRoomState();
 
     const what=mediaType==="youtube" ? "une nouvelle vidéo" : "un nouveau site";
     const label=requesterName&&requesterName!==myName
@@ -1120,6 +1192,91 @@ function renderTypingIndicator(){
 /* =====================================================
    REPONDRE A UN MESSAGE
 ===================================================== */
+/* =====================================================
+   GIFS ALEATOIRES
+   Une vingtaine de catégories ; un clic va chercher un GIF
+   aléatoire correspondant via l'API publique GIPHY.
+===================================================== */
+const GIF_CATEGORIES=[
+    {label:"LOL",tag:"laughing"},
+    {label:"Bravo",tag:"applause"},
+    {label:"Trop bien",tag:"excited"},
+    {label:"Oups",tag:"oops"},
+    {label:"Facepalm",tag:"facepalm"},
+    {label:"Fête",tag:"party"},
+    {label:"Amour",tag:"love"},
+    {label:"Oui",tag:"yes"},
+    {label:"Non",tag:"no"},
+    {label:"Salut",tag:"bye"},
+    {label:"Fatigué",tag:"sleepy"},
+    {label:"Popcorn",tag:"popcorn"},
+    {label:"Danse",tag:"dance"},
+    {label:"Choqué",tag:"shocked"},
+    {label:"Confus",tag:"confused"},
+    {label:"Cool",tag:"cool"},
+    {label:"Victoire",tag:"win"},
+    {label:"Ennui",tag:"bored"},
+    {label:"Merci",tag:"thank you"},
+    {label:"Coucou",tag:"hello"}
+];
+
+const GIPHY_DEMO_KEY="dc6zaTOxFJmzC"; /* clé publique de démo fournie par GIPHY */
+
+function toggleGifPicker(){
+    const picker=document.getElementById("gifPicker");
+    if(!picker.classList.contains("hidden")){
+        picker.classList.add("hidden");
+        return;
+    }
+
+    picker.innerHTML="";
+    GIF_CATEGORIES.forEach(function(cat){
+        const btn=document.createElement("button");
+        btn.className="gif-chip";
+        btn.type="button";
+        btn.textContent=cat.label;
+        btn.addEventListener("click",function(){ pickRandomGif(cat.tag,btn); });
+        picker.appendChild(btn);
+    });
+
+    picker.classList.remove("hidden");
+}
+
+async function pickRandomGif(tag,btnEl){
+    const picker=document.getElementById("gifPicker");
+    const chips=picker.querySelectorAll(".gif-chip");
+    chips.forEach(function(c){ c.disabled=true; });
+
+    try{
+        const res=await fetch("https://api.giphy.com/v1/gifs/random?api_key="+GIPHY_DEMO_KEY+"&tag="+encodeURIComponent(tag)+"&rating=g");
+        const data=await res.json();
+        const url=data&&data.data&&data.data.images&&data.data.images.fixed_height
+            ? data.data.images.fixed_height.url
+            : null;
+
+        if(!url){ toast("Aucun GIF trouvé, réessaie."); return; }
+
+        sendGifMessage(url);
+        picker.classList.add("hidden");
+    }catch(e){
+        toast("Impossible de charger le GIF (vérifie ta connexion).");
+    }finally{
+        chips.forEach(function(c){ c.disabled=false; });
+    }
+}
+
+function sendGifMessage(url){
+    const replyTo=replyContext ? {name:replyContext.name,snippet:replyContext.snippet} : null;
+    const data={type:"chat",name:myName,message:url,linkType:"gif",videoId:null,siteUrl:null,replyTo:replyTo,sender:myId};
+
+    addMessage(myName,url,true,false,"gif",null,null,myId,replyTo);
+
+    if(isHost){ broadcast(data); }
+    else if(hostConnection&&hostConnection.open){ hostConnection.send(data); }
+
+    cancelReply();
+}
+
 function setReplyContext(name,snippet){
     replyContext={name:name,snippet:snippet};
     document.getElementById("replyName").textContent=name;
@@ -1193,7 +1350,17 @@ function addMessage(name,message,isMe,isSystem,linkType,videoId,siteUrl,senderId
 
     let replySnippetForThis;
 
-    if(linkType==="youtube"&&videoId){
+    if(linkType==="gif"){
+        bubble.className="bubble gif-bubble";
+        if(replyQuote){ bubble.appendChild(replyQuote); }
+        const img=document.createElement("img");
+        img.src=message;
+        img.loading="lazy";
+        img.alt="GIF";
+        img.referrerPolicy="no-referrer";
+        bubble.appendChild(img);
+        replySnippetForThis="GIF";
+    }else if(linkType==="youtube"&&videoId){
         bubble.className="bubble link-card";
         if(replyQuote){ bubble.appendChild(replyQuote); }
 
@@ -1286,7 +1453,19 @@ const TRANSIENT_PEER_ERRORS=["network","server-error","socket-error","socket-clo
 function handlePeerError(error){
     console.error("PeerJS:",error);
 
-    if(error.type==="unavailable-id"){ toast("Cette salle existe déjà."); return; }
+    if(error.type==="unavailable-id"){
+        if(attemptingHostRecovery){
+            /* Une autre instance héberge déjà cette salle (un autre onglet
+               resté ouvert, par exemple) : on rejoint simplement en tant
+               qu'invité plutôt que d'échouer. */
+            attemptingHostRecovery=false;
+            try{ localStorage.removeItem("wtaRoomState"); }catch(e){}
+            joinRoom();
+            return;
+        }
+        toast("Cette salle existe déjà.");
+        return;
+    }
 
     if(TRANSIENT_PEER_ERRORS.includes(error.type)){
         /* Coupure réseau ou onglet mis en veille : on retente
@@ -1330,7 +1509,17 @@ window.addEventListener("load",function(){
     roomId=roomFromURL.toUpperCase().trim();
     if(!/^[A-Z0-9]{6}$/.test(roomId)){ toast("Lien de salle invalide."); return; }
 
-    joinRoom();
+    /* Si on est l'hôte qui recharge accidentellement la page (F5, etc.),
+       on reprend le rôle d'hôte au lieu de rejoindre en simple invité
+       et de laisser la salle orpheline. */
+    let stored=null;
+    try{ stored=JSON.parse(localStorage.getItem("wtaRoomState")||"null"); }catch(e){}
+
+    if(stored&&stored.isHost&&stored.roomId===roomId){
+        recreateAsHost(stored);
+    }else{
+        joinRoom();
+    }
 });
 </script>
 
