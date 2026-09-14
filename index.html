@@ -180,13 +180,16 @@ input::placeholder{color:#5f5878;}
 .gif-bubble img{display:block;max-width:200px;max-height:200px;border-radius:14px;background:var(--surface-2);}
 
 .gif-picker{
-    position:absolute;left:14px;right:14px;bottom:68px;max-height:190px;overflow-y:auto;
+    position:absolute;left:14px;right:14px;bottom:68px;max-height:230px;overflow-y:auto;
     background:var(--surface-2);border:1px solid var(--border);border-radius:14px;
-    padding:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:5;box-shadow:0 12px 30px rgba(0,0,0,.45);
+    padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
+    z-index:5;box-shadow:0 12px 30px rgba(0,0,0,.45);
 }
-.gif-chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--text-dim);}
-.gif-chip:active{transform:scale(.94);}
-.gif-chip:disabled{opacity:.5;}
+.gif-thumb{
+    width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;
+    border:1px solid var(--border);background:var(--bg);cursor:pointer;display:block;
+}
+.gif-thumb:active{transform:scale(.93);}
 
 @media(min-width:900px){
     .watch-panel{flex-direction:row;height:640px;}
@@ -1193,32 +1196,27 @@ function renderTypingIndicator(){
    REPONDRE A UN MESSAGE
 ===================================================== */
 /* =====================================================
-   GIFS ALEATOIRES
-   Une vingtaine de GIFs réels, vérifiés et hébergés sur la CDN
-   officielle de GIPHY (pas d'appel API ni de clé requise, donc
-   pas de risque de plantage ou de limite de requêtes).
+   GIFS
+   ~15 GIFs réels (vraies personnes, sauf le panda facepalm),
+   hébergés sur la CDN officielle de GIPHY. On les voit en
+   miniature à l'avance et un clic envoie directement le GIF.
 ===================================================== */
-const GIF_CATEGORIES=[
-    {label:"LOL",id:"aTXHpCN7TSpmE"},
-    {label:"Bravo",id:"w832CKAADJut6lBEOE"},
-    {label:"Trop bien",id:"Es7N4QEKFAKQ67eADS"},
-    {label:"Oups",id:"xUySTUkWi1Q0veIRmU"},
-    {label:"Facepalm",id:"14aUO0Mf7dWDXW"},
-    {label:"Fête",id:"l0MYt5jPR6QX5pnqM"},
-    {label:"Amour",id:"5kpRuktAKcNXy4p1is"},
-    {label:"Oui",id:"JBumCoLu1RimmgT1iV"},
-    {label:"Non",id:"MgXYDOOVCLqii7RVYo"},
-    {label:"Salut",id:"qLVGt6Go1dQFp4qVcg"},
-    {label:"Fatigué",id:"Qh4FSYVY3jvmeVjRur"},
-    {label:"Popcorn",id:"128UMaujdjX7Pi"},
-    {label:"Danse",id:"DnY2M6ddNFP3mslFEn"},
-    {label:"Choqué",id:"t9Mbcz0Cr53VFGsb6j"},
-    {label:"Confus",id:"Z5xk7fGO5FjjTElnpT"},
-    {label:"Cool",id:"w2hGxjfmUiI3uWkm1K"},
-    {label:"Victoire",id:"SM8WjRqKBHFizvxz01"},
-    {label:"Énervé",id:"R2km9sVVEOWZdc2PEH"},
-    {label:"Merci",id:"10c9BEZyo8szo4"},
-    {label:"Coucou",id:"12MWTDpnzvFbSU"}
+const GIF_LIST=[
+    "14aUO0Mf7dWDXW",
+    "sN3UqEngmgo48",
+    "9AIeyMY5YEMJlkgVlY",
+    "111ebonMs90YLu",
+    "Es7N4QEKFAKQ67eADS",
+    "xUySTUkWi1Q0veIRmU",
+    "l0MYt5jPR6QX5pnqM",
+    "UQOtfc9uIXVv9IidCD",
+    "10Jpr9KSaXLchW",
+    "STfLOU6iRBRunMciZv",
+    "4GIvR6cmYs8jC",
+    "l378AEZceMwWboAQE",
+    "128UMaujdjX7Pi",
+    "h4Z6RfuQycdiM",
+    "12MWTDpnzvFbSU"
 ];
 
 function toggleGifPicker(){
@@ -1229,16 +1227,18 @@ function toggleGifPicker(){
     }
 
     picker.innerHTML="";
-    GIF_CATEGORIES.forEach(function(cat){
-        const btn=document.createElement("button");
-        btn.className="gif-chip";
-        btn.type="button";
-        btn.textContent=cat.label;
-        btn.addEventListener("click",function(){
-            sendGifMessage("https://media.giphy.com/media/"+cat.id+"/giphy.gif");
+    GIF_LIST.forEach(function(id){
+        const img=document.createElement("img");
+        img.className="gif-thumb";
+        img.src="https://media.giphy.com/media/"+id+"/giphy.gif";
+        img.loading="lazy";
+        img.alt="GIF";
+        img.referrerPolicy="no-referrer";
+        img.addEventListener("click",function(){
+            sendGifMessage("https://media.giphy.com/media/"+id+"/giphy.gif");
             picker.classList.add("hidden");
         });
-        picker.appendChild(btn);
+        picker.appendChild(img);
     });
 
     picker.classList.remove("hidden");
