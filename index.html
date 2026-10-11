@@ -109,6 +109,9 @@ input.seek{-webkit-appearance:none;appearance:none;flex:1;min-width:40px;height:
 input.seek:disabled{opacity:.6;cursor:default;}
 input.seek::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 3px rgba(236,72,153,.35);}
 input.seek::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:0;}
+.vc-cc{font-size:11px;font-weight:800;border:2px solid #fff;border-radius:5px;padding:0 4px;line-height:15px;position:relative;}
+.vc-cc.off{opacity:.55;}
+.vc-cc.off::after{content:"";position:absolute;left:-3px;right:-3px;top:50%;height:2px;background:#fff;transform:rotate(-20deg);}
 .mini-x{position:absolute;top:6px;right:6px;z-index:8;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;display:none;align-items:center;justify-content:center;}
 .video-frame.mini{position:fixed;inset:auto 16px 16px auto;width:300px;height:169px;z-index:80;border-radius:14px;border:1px solid var(--border);box-shadow:0 14px 36px rgba(0,0,0,.6);}
 .video-frame.mini .vc{display:none;}
@@ -316,6 +319,7 @@ input.seek::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background
                     <button id="vcPlay" class="vc-btn" type="button" title="Lecture / pause"><span class="ic" data-i="play"></span></button>
                     <span id="vcTime" class="vc-time">0:00 / 0:00</span>
                     <input id="seek" class="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Position">
+                    <button id="vcCc" class="vc-btn" type="button" title="Sous-titres"><span class="vc-cc">CC</span></button>
                     <button id="vcMute" class="vc-btn" type="button" title="Son"><span class="ic" data-i="volume"></span></button>
                     <button id="vcPip" class="vc-btn" type="button" title="Mini-lecteur"><span class="ic" data-i="pip"></span></button>
                     <button id="vcFs" class="vc-btn" type="button" title="Plein écran"><span class="ic" data-i="full"></span></button>
@@ -595,6 +599,30 @@ function fetchTitle(m){
 const videoEl=$("html5"), siteFrame=$("siteFrame"), videoFrame=$("videoFrame");
 let ytPlayer=null, ytReady=false, ytWait=[], ytApiRequested=false;
 let vol={muted:false};
+/* Sous-titres : désactivés par défaut, choix personnel de chacun (hôte comme invité) */
+let subsOn=false;
+try{ subsOn=localStorage.getItem("wtaSubs")==="1"; }catch(e){}
+function applySubs(){
+    try{
+        if(ytReady&&ytPlayer){
+            if(subsOn){ ytPlayer.loadModule("captions"); }
+            else{ ytPlayer.unloadModule("captions"); ytPlayer.unloadModule("cc"); }
+        }
+    }catch(e){}
+    try{
+        const tr=videoEl.textTracks;
+        for(let i=0;i<tr.length;i++){ tr[i].mode=subsOn?"showing":"disabled"; }
+    }catch(e){}
+    const cc=$("vcCc");
+    if(cc){ cc.firstChild.classList.toggle("off",!subsOn); }
+}
+function toggleSubs(){
+    subsOn=!subsOn;
+    try{ localStorage.setItem("wtaSubs",subsOn?"1":"0"); }catch(e){}
+    applySubs();
+    toast(subsOn?"Sous-titres activés.":"Sous-titres désactivés.");
+    if(typeof renderMenu==="function"&&!$("menu").classList.contains("hidden")) renderMenu();
+}
 
 function quiet(ms){ quietUntil=Date.now()+(ms||700); }
 
@@ -610,7 +638,7 @@ function withYT(fn){
     document.head.appendChild(s);
 }
 function createYT(){
-    const vars={autoplay:0,controls:0,rel:0,playsinline:1,modestbranding:1,iv_load_policy:3,disablekb:1,fs:0};
+    const vars={autoplay:0,cc_load_policy:0,controls:0,rel:0,playsinline:1,modestbranding:1,iv_load_policy:3,disablekb:1,fs:0};
     if(location.protocol.indexOf("http")===0){ vars.origin=location.origin; }
     ytPlayer=new YT.Player("player",{
         width:"100%",height:"100%",playerVars:vars,
@@ -622,7 +650,7 @@ function createYT(){
             },
             onStateChange:function(e){
                 if(e.data===0&&isHost){ hostEnded(); }
-                if(e.data===1){ hideGesture(); }
+                if(e.data===1){ hideGesture(); applySubs(); setTimeout(applySubs,600); }
             },
             onError:handleYouTubeError
         }
@@ -642,7 +670,7 @@ const YT_A={
         withYT(function(){
             const o={videoId:v,startSeconds:Math.max(0,time||0)};
             if(playing){ ytPlayer.loadVideoById(o); } else { ytPlayer.cueVideoById(o); }
-            applyVolume();
+            applyVolume(); applySubs();
         });
     },
     getTime:function(){ return ytReady&&ytPlayer.getCurrentTime ? num(ytPlayer.getCurrentTime()) : 0; },
@@ -684,7 +712,8 @@ const VID_A={
     stop:function(){ quiet(); videoEl.pause(); videoEl.removeAttribute("src"); videoEl.load(); },
     hardDrift:1.2
 };
-videoEl.addEventListener("loadedmetadata",function(){
+try{ videoEl.textTracks.addEventListener("addtrack",applySubs); }catch(e){}
+videoEl.addEventListener("loadedmetadata",function(){ applySubs();
     const p=VID_A.pending; VID_A.pending=null;
     if(!p) return;
     quiet(1200);
@@ -883,6 +912,7 @@ $("seek").addEventListener("change",function(){
     userControl("seek",this.value/1000*a.duration());
 });
 $("vcPlay").addEventListener("click",function(e){ e.stopPropagation(); togglePlay(); showControls(); });
+$("vcCc").addEventListener("click",function(e){ e.stopPropagation(); toggleSubs(); });
 $("vcMute").addEventListener("click",function(e){ e.stopPropagation(); toggleMute(); });
 $("vcPip").addEventListener("click",function(e){ e.stopPropagation(); togglePip(); });
 $("vcFs").addEventListener("click",function(e){ e.stopPropagation(); toggleFullscreen(); });
@@ -954,6 +984,7 @@ document.addEventListener("keydown",function(e){
     else if(e.key==="ArrowRight"){ seekBy(5); showControls(); }
     else if(e.key==="f"){ toggleFullscreen(); }
     else if(e.key==="m"){ toggleMute(); }
+    else if(e.key==="c"){ toggleSubs(); }
 });
 </script>
 <script>
@@ -1539,6 +1570,7 @@ function renderMenu(){
         info.textContent=settings.guestControl===false?"Commandes réservées à l'hôte.":"Tu peux contrôler la lecture.";
         m.appendChild(info);
     }
+    m.appendChild(menuItem("Sous-titres (YouTube / vidéo)",{on:subsOn,fn:function(){ toggleSubs(); }}));
     m.appendChild(menuItem("Son des notifications",{on:soundOn,fn:function(){
         soundOn=!soundOn; lsSet("wtaSound",soundOn?"1":"0"); renderMenu();
     }}));
@@ -1958,7 +1990,7 @@ function openRoom(){
     $("menuBtn").classList.remove("hidden");
     hydrateIcons();
     updateUsers(); renderQueue(); renderMenu(); updateControlsForType();
-    applyVolume();
+    applyVolume(); applySubs();
 }
 
 function goJoinCode(){
