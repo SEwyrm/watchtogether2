@@ -447,6 +447,14 @@ function getYouTubeId(value){
     return null;
 }
 
+function toEmbedUrl(u){
+    try{
+        const m=String(u).match(/tiktok\.com\/(?:@[^\/]+\/video|embed\/v2|v)\/(\d{8,25})/);
+        if(m) return "https://www.tiktok.com/embed/v2/"+m[1];
+    }catch(e){}
+    return u;
+}
+
 function isValidHttpUrl(value){
     if(!value) return false;
     try{
@@ -712,7 +720,7 @@ function loadMedia(){
         stopSyncTimer();
         document.getElementById("player").classList.add("hidden");
         siteFrame.classList.remove("hidden");
-        siteFrame.src=currentSiteUrl;
+        siteFrame.src=toEmbedUrl(currentSiteUrl);
         siteNote.classList.remove("hidden");
         videoEmpty.classList.add("hidden");
         document.getElementById("nowPlaying").textContent="Site partagé";
@@ -901,7 +909,7 @@ function playEveryone(){
 
 function reloadEveryone(){
     if(!isHost||currentMediaType!=="site") return;
-    siteFrame.src=currentSiteUrl;
+    siteFrame.src=toEmbedUrl(currentSiteUrl);
     broadcast({type:"sync",mediaType:"site",url:currentSiteUrl});
     toast("Page rechargée pour tout le monde.");
 }
@@ -1203,41 +1211,50 @@ function renderTypingIndicator(){
 ===================================================== */
 const GIF_LIST=[
     "14aUO0Mf7dWDXW",
-    "sN3UqEngmgo48",
-    "9AIeyMY5YEMJlkgVlY",
-    "111ebonMs90YLu",
-    "Es7N4QEKFAKQ67eADS",
-    "xUySTUkWi1Q0veIRmU",
-    "l0MYt5jPR6QX5pnqM",
-    "UQOtfc9uIXVv9IidCD",
-    "10Jpr9KSaXLchW",
-    "STfLOU6iRBRunMciZv",
-    "4GIvR6cmYs8jC",
-    "l378AEZceMwWboAQE",
-    "128UMaujdjX7Pi",
-    "h4Z6RfuQycdiM",
-    "12MWTDpnzvFbSU",
-    "w832CKAADJut6lBEOE",
-    "vvbGMpbhZMcHSsD50w",
-    "LOEI8jsNKPmzdJYvhJ",
-    "DnY2M6ddNFP3mslFEn",
-    "CPskAi4C6WLHa",
-    "l0IypeKl9NJhPFMrK",
-    "VTXkotQ1ZRK6jK65jb",
-    "SM8WjRqKBHFizvxz01",
-    "5hLiSc7v1UC52",
-    "l1J9u3TZfpmeDLkD6",
-    "3o85xwxr06YNoFdSbm",
-    "dVd7IQS0DWAKI",
-    "xT9IgG50Fb7Mi0prBC",
-    "3o6Ztl7oraKm4ZJ9mw",
-    "3oAt2dA6LxMkRrGc0g",
-    "3oAt21Fnr4i54uK8vK",
-    "3ohs7OhvjpfjRm21NK",
+    "4qWmBL4Ttzpu",
+    "3DE8eBtxSQsKc",
+    "j0vY3GTYwnj97tkbDa",
+    "IzEopGVvK5MtigFfjW",
+    "6qFFgNgextP9u",
+    "iJJ6E58EttmFqgLo96",
+    "4vQyO4VgU8XngKKhDx",
+    "d2lcHJTG5Tscg",
+    "aCB9UFwAw7Nio",
+    "Bl10664xbIVkk",
+    "bJGQavEgK77jy",
+    "EJMyMO22UxP68",
     "pa37AAGzKXoek",
-    "8La42nWHZpLQ4",
-    "l0HlQPm37CW8A4zAs",
-    "pejC6N6W5GLEPtA27w"
+    "RLcQGYmQU36d3FceiP",
+    "7TwPbkbwhIGx4PEAQt",
+    "3s6IlivlQZQ5xtFcO2",
+    "i1JSXl0MfeRd6",
+    "u8ontzUmtHnmuBt5IQ",
+    "GwLkw4RIIr6Q4e5hUc",
+    "l41m4sZ3LlhPu8P0Q",
+    "44b1ABtsG7VTy",
+    "7YrnYstmGxYFa",
+    "5a9Wk5dfDjGUeQrIFC",
+    "W0SLa0YuzWBZ6",
+    "11GB63PhOmwVhu",
+    "KOUp2nbwHm7vy",
+    "qiDb8McXyj6Eg",
+    "P2uAlsXZEQo2OAaNcN",
+    "10Jpr9KSaXLchW",
+    "3NUJ4FwSp4MJG",
+    "pls8xeXFbASfGMn6jD",
+    "gVoBC0SuaHStq",
+    "Jsh76ebLjjxmG0dVex",
+    "NpL4D3Oc2bJUMAXF9P",
+    "Atc9QCyWLGHgLZhHDp",
+    "22CEvbj04nLLq",
+    "wVcNP3TnXbl84",
+    "Vi4MRwWi9sYpi",
+    "pUeXcg80cO8I8",
+    "12aW6JtfvUdcdO",
+    "XQq8UMo254P16",
+    "xT9IgG50Fb7Mi0prBC",
+    "VRGLZ1TjnRHUs",
+    "XPQL7UFNyfuEg"
 ];
 
 function toggleGifPicker(){
@@ -1255,6 +1272,7 @@ function toggleGifPicker(){
         img.loading="lazy";
         img.alt="GIF";
         img.referrerPolicy="no-referrer";
+        img.addEventListener("error",function(){ img.remove(); });
         img.addEventListener("click",function(){
             sendGifMessage("https://media.giphy.com/media/"+id+"/giphy.gif");
             picker.classList.add("hidden");
@@ -1358,6 +1376,7 @@ function addMessage(name,message,isMe,isSystem,linkType,videoId,siteUrl,senderId
         img.loading="lazy";
         img.alt="GIF";
         img.referrerPolicy="no-referrer";
+        img.addEventListener("error",function(){ img.remove(); });
         bubble.appendChild(img);
         replySnippetForThis="GIF";
     }else if(linkType==="youtube"&&videoId){
